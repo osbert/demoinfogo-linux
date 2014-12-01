@@ -2,7 +2,7 @@
 demoinfogo
 src/generated_proto/
 protobuf-2.5.0
+nbproject
 *.dem
 *.tar
-*.gz
-*.o
+*.gz*.o
