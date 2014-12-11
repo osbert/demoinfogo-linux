@@ -84,7 +84,7 @@ int main( int argc, char *argv[] )
 				else if ( strcasecmp( &argv[i][1], "deathscsv" ) == 0 )
 				{
 					g_bDumpDeaths = true;
-					g_bSupressWarmupDeaths = false;
+					g_bSupressWarmupDeaths = true;
 				}
 				else if ( strcasecmp( &argv[i][1], "nowarmup" ) == 0 )
 				{

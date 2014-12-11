@@ -34,6 +34,8 @@
 #include "generated_proto/cstrike15_usermessages_public.pb.h"
 #include "generated_proto/netmessages_public.pb.h"
 
+#include "playerstats.h"
+
 // file globals
 static int s_nNumStringTables;
 static StringTableData_t s_StringTables[ MAX_STRING_TABLES ];
@@ -44,6 +46,7 @@ static std::vector< CSVCMsg_SendTable > s_DataTables;
 static std::vector< ExcludeEntry > s_currentExcludes;
 static std::vector< EntityEntry * > s_Entities;
 static std::vector< player_info_t > s_PlayerInfos;
+static PlayerStatsTable s_PlayerStats;
 
 extern bool g_bDumpGameEvents;
 extern bool g_bSupressFootstepEvents;
@@ -57,6 +60,7 @@ extern bool g_bDumpNetMessages;
 
 static bool s_bMatchStartOccured = false;
 static int s_nCurrentTick;
+static int s_nCurrentRound; 
 
 EntityEntry *FindEntity( int nEntity );
 
@@ -413,6 +417,19 @@ bool ShowPlayerInfo( const char *pField, int nIndex, bool bShowDetails = true, b
 	return false;
 }
 
+void HandleRoundEnd()
+{
+    if (s_bMatchStartOccured)
+        s_PlayerStats.displayRoundStats(s_nCurrentRound);
+}
+
+void HandleMatchEnd()
+{
+    if (s_bMatchStartOccured)
+        s_PlayerStats.displayMatchStats();
+}
+
+
 void HandlePlayerDeath( const CSVCMsg_GameEvent &msg, const CSVCMsg_GameEventList::descriptor_t *pDescriptor )
 {
 	int numKeys = msg.keys().size();
@@ -448,7 +465,18 @@ void HandlePlayerDeath( const CSVCMsg_GameEvent &msg, const CSVCMsg_GameEventLis
 			bHeadshot = KeyValue.val_bool();
 		}
 	}
-	
+
+        if (s_bMatchStartOccured)
+        {
+            s_PlayerStats.addKill( attackerid, bHeadshot );
+                        
+            s_PlayerStats.addDeath( userid );
+            
+            if ( assisterid )
+                s_PlayerStats.addAssist( assisterid );
+        }
+        
+        /*
 	ShowPlayerInfo( "victim", userid, true, true );
 	printf ( ", " );
 	ShowPlayerInfo( "attacker", attackerid, true, true );
@@ -459,6 +487,7 @@ void HandlePlayerDeath( const CSVCMsg_GameEvent &msg, const CSVCMsg_GameEventLis
 		ShowPlayerInfo( "assister", assisterid, true, true );
 	}
 	printf( "\n" );
+        */
 }
 
 void ParseGameEvent( const CSVCMsg_GameEvent &msg, const CSVCMsg_GameEventList::descriptor_t *pDescriptor )
@@ -472,7 +501,26 @@ void ParseGameEvent( const CSVCMsg_GameEvent &msg, const CSVCMsg_GameEventList::
 			{
 				if ( pDescriptor->name().compare( "round_announce_match_start" ) == 0 )
 				{
+                                        s_nCurrentRound = 0;
+                                        s_PlayerStats.reset();
 					s_bMatchStartOccured = true;
+				}
+                                
+				if ( pDescriptor->name().compare( "round_start" ) == 0 && s_bMatchStartOccured )
+				{
+					printf("Current Round = %d\n", ++s_nCurrentRound);
+                                        
+                                        s_PlayerStats.setRound(s_nCurrentRound);
+				}
+
+                                if ( pDescriptor->name().compare( "round_end" ) == 0 && s_bMatchStartOccured )
+				{
+					HandleRoundEnd();
+				}
+                                
+                                if ( pDescriptor->name().compare( "cs_win_panel_match" ) == 0 && s_bMatchStartOccured )
+				{
+                                        HandleMatchEnd();
 				}
 
 				bool bAllowDeathReport = !g_bSupressWarmupDeaths || s_bMatchStartOccured;
