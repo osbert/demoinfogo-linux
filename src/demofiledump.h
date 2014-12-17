@@ -86,6 +86,8 @@ struct player_info_t
 	unsigned char	filesDownloaded;
 };
 
+player_info_t *FindPlayerInfo( int );
+
 struct ExcludeEntry
 {
 	ExcludeEntry( const char *pVarName, const char *pDTName, const char *pDTExcluding )

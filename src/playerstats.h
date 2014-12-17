@@ -8,6 +8,9 @@
 #ifndef PLAYERSTATSTABLE_H
 #define	PLAYERSTATSTABLE_H
 
+#include "demofiledump.h"
+#include <iostream>
+#include <iomanip>
 #include <string>
 #include <vector>
 #include <map>
@@ -39,19 +42,24 @@ public:
     void addHeadshot( int userID ) { ++map_[ userID ][ round_ ].headshots; }
     void setMvp( int userID ) { map_[ userID ][ round_ ].mvp = true; }
     void displayRoundStats( int round ) {
-        printf( "Round %d Stats\n", round );
-        printf( "UserID\tK\tD\tA\tHS\tMVP\n" );
+        printf( "\nRound %d Stats\n", round );
+        std::cout<<std::setw(32)<<std::left<<"Name";
+        printf( "K\tD\tA\tHS\tMVP\n" );
         for ( const auto& kv : map_ ) {
             const round_stats& rs = map_[ kv.first ][ round ];
-            printf( "%d\t%d\t%d\t%d\t%d\t%d\n", kv.first, rs.kills, rs.deaths,
+            const player_info_t* pi = FindPlayerInfo( kv.first );
+            std::cout<<std::setw(32)<<pi->name;
+            printf( "%d\t%d\t%d\t%d\t%d\n", rs.kills, rs.deaths,
                     rs.assists, rs.headshots, rs.mvp );
         }
     }
     void displayMatchStats() {
-        printf( "Match Stats\n" );
-        printf( "UserID\tK\tD\tA\tHS\tMVP\n" );
+        printf( "\nMatch Stats\n" );
+        std::cout<<std::setw(32)<<std::left<<"Name";
+        printf( "K\tD\tA\tHS\tMVP\n" );
         for ( const auto& kv : map_ ) {
             int k = 0, d = 0, a = 0, hs = 0, mvp = 0;
+            const player_info_t* pi = FindPlayerInfo( kv.first );
             for ( const auto& kv2 : kv.second ) {
                 const round_stats& rs = kv2.second;
                 k += rs.kills;
@@ -60,7 +68,8 @@ public:
                 hs += rs.headshots;
                 mvp += rs.mvp;
             }
-            printf( "%d\t%d\t%d\t%d\t%d\t%d\n", kv.first, k, d, a, hs, mvp );
+            std::cout<<std::setw(32)<<std::left<<pi->name;
+            printf( "%d\t%d\t%d\t%d\t%d\n", k, d, a, hs, mvp );
         }
     }
     void reset() { map_.clear(); }
